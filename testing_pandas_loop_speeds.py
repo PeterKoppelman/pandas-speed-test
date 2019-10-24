@@ -1,4 +1,5 @@
 # Based on article How to Use Pandas Right by George Seif - Peter Koppelman May 25, 2019
+# Updated September 1, 2019 to include itertuples. Peter Koppelman.
 
 import seaborn as sns
 import pandas as pd
@@ -8,12 +9,14 @@ import matplotlib.pyplot as plt
 sns.set()
 
 
-def main():
+def main(N):
 	def load_data(N, data):
 		# take the current length of data and make it 10 times longer.		
 		data2 = data
+		start = time.time()
 		for i in range(9):
 			data = pd.concat([data, data2], ignore_index=True)
+		print('Elapsed time to increase data set', time.time() - start)
 		return data
 
 
@@ -50,6 +53,15 @@ def main():
 			    class_list.append(class_num)
 			return time.time() - start
 
+		def itertuples_func(data):
+		# Use pandas itertuples() function in loop.
+			start = time.time()
+			class_list = []
+			for data_row in data.itertuples():
+			    petal_length = data_row[0]
+			    class_num = compute_class(petal_length)
+			    class_list.append(class_num)
+			return time.time() - start
 
 		def apply_func(data):
 		# Use the apply function in pandas - no more loops
@@ -71,9 +83,10 @@ def main():
 		# Run through each type of "loop"
 		for_loop_time = std_loop(data)
 		iter_loop_time = iter_func(data)
+		itertuples_loop_time = itertuples_func(data)
 		apply_time = apply_func(data)
 		cut_time = cut_func(data)
-		return for_loop_time, iter_loop_time, apply_time, cut_time
+		return for_loop_time, iter_loop_time, itertuples_loop_time, apply_time, cut_time
 
 
 	def print_results(df_time_series):
@@ -82,7 +95,7 @@ def main():
 		print(' ' * 24, end = '')
 		print('Time to complete loops in Seconds')
 		df_time_series = pd.DataFrame(speed_dict).T
-		df_time_series.columns = ['For Loop', 'Iter Rows', 'Apply', 'Cut']
+		df_time_series.columns = ['For Loop', 'Iter Rows', 'Iter Tuples', 'Apply', 'Cut']
 		df_time_series.index.name = 'Number of Loops'
 		print(df_time_series)
 		print()
@@ -91,6 +104,7 @@ def main():
 		# as a baseline
 		df_time_series_pct = df_time_series.copy()
 		df_time_series_pct['Iter Rows'] = df_time_series_pct['For Loop']/df_time_series_pct['Iter Rows']
+		df_time_series_pct['Iter Tuples'] = df_time_series_pct['For Loop']/df_time_series_pct['Iter Tuples']
 		df_time_series_pct['Apply'] = df_time_series_pct['For Loop']/df_time_series_pct['Apply']
 		df_time_series_pct['Cut'] = df_time_series_pct['For Loop']/df_time_series_pct['Cut']
 		df_time_series_pct['For Loop'] = 1.000000
@@ -122,14 +136,6 @@ def main():
 	as a list that will be the value'''
 	speed_dict = {}
 
-	'''N is the number of loops that we will do.
-	N = 1 is one loop with 150 rows
-	N = 2 is two loops. One with 150 rows, one with 1,500 rows
-	N = 3 is three loops. One with 150 rows, one with 1,500 rows and one with 15,000 rows
-	You can change N to be any number that you wish, but watch out...the for loop will take
-	some time.
-	''' 
-	N = 3
 	'''Load the sample data set from seaborn'''
 	data = sns.load_dataset('iris')
 
@@ -137,8 +143,10 @@ def main():
 		# No need to load data on the first go round. It's been done just above from seaborn 
 		if i > 0:
 			data = load_data(i, data)
-		for_loop_time, iter_loop_time, apply_time, cut_time = calc_times(data)
-		speed_dict[len(data)] = [for_loop_time, iter_loop_time, apply_time, cut_time]
+		# for_loop_time, iter_loop_time, apply_time, cut_time = calc_times(data)
+		# speed_dict[len(data)] = [for_loop_time, iter_loop_time, apply_time, cut_time]
+		for_loop_time, iter_loop_time, itertuples_time, apply_time, cut_time = calc_times(data)
+		speed_dict[len(data)] = [for_loop_time, iter_loop_time, itertuples_time, apply_time, cut_time]
 		print_interim_results(data)
 
 	df_time_series = pd.DataFrame(speed_dict)
@@ -146,5 +154,14 @@ def main():
 	
 
 if __name__ == '__main__':
+	
+	'''N is the number of loops that we will do.
+	N = 1 is one loop with 150 rows
+	N = 2 is two loops. One with 150 rows, one with 1,500 rows
+	N = 3 is three loops. One with 150 rows, one with 1,500 rows and one with 15,000 rows
+	You can change N to be any number that you wish, but watch out...the for loop will take
+	some time.
+	''' 
+	N = 4
 	# Run the speed Test
-	main()
+	main(N)
