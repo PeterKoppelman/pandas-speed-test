@@ -1,7 +1,8 @@
 # pandas-speed-test
 This program comppares four different ways to "loop" through a dataframe:
 1) a standard python for loop
-2) a for loop using pandas iterrows()
+2) a for loop using pandas iterrows function
+3) a for loop using pandas itertuples function
 3) using a pandas apply function
 4) using a pandas cut function
 
